@@ -1,8 +1,10 @@
-import { LengthUnit, Offset, promptAction, SymbolGlyphModifier } from '@kit.ArkUI';
+import { ExceptionPrompt, LengthUnit, MarginType, Offset, promptAction, SymbolGlyphModifier } from '@kit.ArkUI';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { scanCore, scanBarcode } from '@kit.ScanKit';
 
-import { FAKE_OTP_CODE, ONE_DAY_IN_MS, PREF_KEY_ITEMS, PREF_PASSWORD_CHALLENGE_TIME } from '../common/conts';
+import { FAKE_OTP_CODE, ONE_DAY_IN_MS,
+    PREF_BACKUP_PROMPT,
+    PREF_KEY_ITEMS, PREF_PASSWORD_CHALLENGE_TIME } from '../common/conts';
 import { ScrollEventExtension, ScrollPosition } from '../common/eventExtension';
 import { IssuerName, OTP, OTPSchema, parseURI, TimedOTPSchema } from '../crypto/otpUtils';
 import { fuzzysearch } from '../common/utils';
@@ -113,6 +115,7 @@ class DragState<T> {
 @Entry(storage)
 @Component
 struct Index {
+    @StorageProp(PREF_BACKUP_PROMPT) BackupPrompt: boolean = false;
     @StorageProp(PREF_PASSWORD_CHALLENGE_TIME) PasswordChallengeTime: number = Date.now();
     @StorageProp('settingsPasswordReminderPeriod') PasswordReminderPeriod: PasswordReminderPeriod = 'biweekly';
     @StorageProp('EncMasterKey') EncMasterKey: MasterKeyInfo = {} as MasterKeyInfo;
@@ -138,6 +141,19 @@ struct Index {
     build() {
         RelativeContainer() {
             Navigation(this.navStack) {
+                ExceptionPrompt({
+                    options: {
+                        tip: $r('app.string.prompt_backup_hint'),
+                        actionText: $r('app.string.prompt_backup_action'),
+                        isShown: this.BackupPrompt,
+                        marginType: MarginType.DEFAULT_MARGIN,
+                        marginTop: 6,
+                    },
+                    onActionTextClick: () => {
+
+                    },
+                }).height(60)
+                //
                 Stack() {
                     // main content
                     if (this.EnableBiometricUnlock && !validateAtlAuth(this.atlAuth)) {

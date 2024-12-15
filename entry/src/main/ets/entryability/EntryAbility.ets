@@ -16,6 +16,7 @@ import { arrayRearrange, b32decode, isValidBase32String, stringToUint8Array,
     Uint8ArrayToString } from '../common/utils';
 import { AIGIS_PREF_NAME, FAKE_OTP_CODE,
     MAX_ICON_PACK_SIZE,
+    PREF_BACKUP_PROMPT,
     PREF_DEC_MASTER_KEY,
     PREF_ICON_PACKS,
     PREF_KEY_SECRETS, PREF_KEY_SETTINGS, PREF_MASTER_KEY,
@@ -523,6 +524,9 @@ class PreferencesManager {
             dataPreferences.putSync(PREF_MASTER_KEY, this._encMasterKeyInfo);
             dataPreferences.putSync(PREF_DEC_MASTER_KEY, this._decMasterKeyInfo);
         }
+        // persist backup prompt
+        dataPreferences.putSync(PREF_BACKUP_PROMPT, true);
+        AppStorage.set(PREF_BACKUP_PROMPT, true);
         //
         dataPreferences.flush();
     }
@@ -574,6 +578,9 @@ export default class EntryAbility extends UIAbility {
                     pref.putSync(PREF_PASSWORD_CHALLENGE_TIME, passwordChallengeTimestamp);
                 }
                 AppStorage.setAndProp(PREF_PASSWORD_CHALLENGE_TIME, passwordChallengeTimestamp);
+                // load backup prompt
+                const backupPrompt = pref.getSync(PREF_BACKUP_PROMPT, false) as boolean;
+                AppStorage.setAndProp(PREF_BACKUP_PROMPT, backupPrompt);
                 // init controller
                 this.instPreferences = new PreferencesManager(
                     pref.getSync(PREF_KEY_ITEMS, []) as OTPItemInfo[],
@@ -785,6 +792,8 @@ export default class EntryAbility extends UIAbility {
                 const result = await importer?.save(file.fd, key??'', content);
                 if (result) {
                     promptAction.showToast({message: $r('app.string.setting_export_message_success', data.uri)});
+                    this.dataPreferences!.putSync(PREF_BACKUP_PROMPT, false);
+                    AppStorage.set(PREF_BACKUP_PROMPT, false);
                 } else {
                     promptAction.showToast({message: $r('app.string.setting_export_message_failed')});
                     throw Error('Export failed.');
